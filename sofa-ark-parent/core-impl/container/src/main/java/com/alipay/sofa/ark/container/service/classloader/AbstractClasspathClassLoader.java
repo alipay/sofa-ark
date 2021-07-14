@@ -32,10 +32,7 @@ import java.net.URLClassLoader;
 import java.net.URLConnection;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarFile;
 
 /**
@@ -51,6 +48,8 @@ public abstract class AbstractClasspathClassLoader extends URLClassLoader {
 
     protected ClassLoaderService  classloaderService    = ArkServiceContainerHolder.getContainer()
                                                             .getService(ClassLoaderService.class);
+
+    Map<String, URL> urlResourceMap = new HashMap<>();
 
     static {
         ClassLoader.registerAsParallelCapable();
@@ -142,13 +141,19 @@ public abstract class AbstractClasspathClassLoader extends URLClassLoader {
     @Override
     public URL getResource(String name) {
         Handler.setUseFastConnectionExceptions(true);
+        URL url = null;
         try {
+            if (urlResourceMap.containsKey(name)) {
+                return urlResourceMap.get(name);
+            }
             URL ret = preFindResource(name);
             if (ret != null) {
                 return ret;
             }
             ret = getResourceInternal(name);
-            return ret != null ? ret : postFindResource(name);
+            url = ret != null ? ret : postFindResource(name);
+            urlResourceMap.put(name, url);
+            return url;
         } finally {
             Handler.setUseFastConnectionExceptions(false);
         }

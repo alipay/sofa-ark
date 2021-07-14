@@ -16,10 +16,11 @@
  */
 package com.alipay.sofa.ark.loader.jar;
 
+import com.alipay.sofa.ark.loader.data.RandomAccessData.ResourceAccess;
+
 import java.io.*;
 import java.net.*;
 import java.security.Permission;
-import com.alipay.sofa.ark.loader.data.RandomAccessData.ResourceAccess;
 
 /**
  * {@link java.net.JarURLConnection} used to support {@link JarFile#getUrl()}.
@@ -91,7 +92,7 @@ final public class JarURLConnection extends java.net.JarURLConnection {
         if (!this.jarEntryName.isEmpty() && this.jarEntry == null) {
             this.jarEntry = this.jarFile.getJarEntry(getEntryName());
             if (this.jarEntry == null) {
-                throwFileNotFound(this.jarEntryName, this.jarFile);
+                throw FILE_NOT_FOUND_EXCEPTION;
             }
         }
         this.connected = true;
@@ -158,16 +159,9 @@ final public class JarURLConnection extends java.net.JarURLConnection {
         InputStream inputStream = (this.jarEntryName.isEmpty() ? this.jarFile.getData()
             .getInputStream(ResourceAccess.ONCE) : this.jarFile.getInputStream(this.jarEntry));
         if (inputStream == null) {
-            throwFileNotFound(this.jarEntryName, this.jarFile);
-        }
-        return inputStream;
-    }
-
-    private void throwFileNotFound(Object entry, JarFile jarFile) throws FileNotFoundException {
-        if (Boolean.TRUE.equals(useFastExceptions.get())) {
             throw FILE_NOT_FOUND_EXCEPTION;
         }
-        throw new FileNotFoundException("JAR entry " + entry + " not found in " + jarFile.getName());
+        return inputStream;
     }
 
     @Override
